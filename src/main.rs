@@ -17,23 +17,34 @@ fn main() {
             }),
             ..default()
         }))
+        .add_state::<GameState>()
         .add_plugin(ui::GameUIPlugin)
         .init_resource::<FontSpec>()
         .init_resource::<Game>()
         .add_event::<NewTileEvent>()
         .add_startup_systems((setup, spawn_board, apply_system_buffers, spawn_tiles).chain())
-        .add_systems((
-            render_tile_points,
-            board_shift,
-            render_tiles,
-            new_tile_handler,
-            end_game,
-        ))
+        .add_systems(
+            (
+                render_tile_points,
+                board_shift,
+                render_tiles,
+                new_tile_handler,
+                end_game,
+            )
+                .in_set(OnUpdate(GameState::Playing)),
+        )
         .run()
 }
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
+}
+
+#[derive(Debug, Default, Clone, Eq, PartialEq, Hash, States)]
+enum GameState {
+    #[default]
+    Playing,
+    GameOver,
 }
 
 struct NewTileEvent;
@@ -364,7 +375,11 @@ fn new_tile_handler(
     }
 }
 
-fn end_game(tiles: Query<(&Position, &Points)>, query_board: Query<&Board>) {
+fn end_game(
+    tiles: Query<(&Position, &Points)>,
+    query_board: Query<&Board>,
+    mut run_state: ResMut<NextState<GameState>>,
+) {
     let board = query_board.single();
 
     let max_tiles = 16;
@@ -395,6 +410,7 @@ fn end_game(tiles: Query<(&Position, &Points)>, query_board: Query<&Board>) {
 
         if !has_move {
             dbg!("game over!");
+            run_state.set(GameState::GameOver);
         }
     }
 }
