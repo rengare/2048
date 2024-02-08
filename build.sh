@@ -1,3 +1,1 @@
-trunk build --release
-rm -rf ./docs
-mv dist docs
+trunk build --release --public-url 2048 --dist docs
