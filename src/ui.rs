@@ -35,7 +35,7 @@ fn setup_ui(mut commands: Commands, font_spec: Res<FontSpec>) {
         })
         .with_children(|parent| {
             parent.spawn(TextBundle::from_section(
-                "2048",
+                "2048 - Use arrow keys",
                 TextStyle {
                     font: font_spec.family.clone(),
                     font_size: 40.0,
