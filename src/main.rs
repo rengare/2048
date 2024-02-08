@@ -1,3 +1,4 @@
+use bevy_easings::*;
 use std::{cmp::Ordering, collections::HashMap, ops::Range};
 
 use bevy::prelude::*;
@@ -17,12 +18,14 @@ fn main() {
             }),
             ..default()
         }))
+        .add_plugin(EasingsPlugin)
         .add_state::<GameState>()
         .add_plugin(ui::GameUIPlugin)
         .init_resource::<FontSpec>()
         .init_resource::<Game>()
         .add_event::<NewTileEvent>()
-        .add_startup_systems((setup, spawn_board, apply_system_buffers, spawn_tiles).chain())
+        .add_systems((game_reset, spawn_tiles).in_schedule(OnEnter(GameState::Playing)))
+        .add_startup_systems((setup, spawn_board, apply_system_buffers).chain())
         .add_systems(
             (
                 render_tile_points,
@@ -52,6 +55,7 @@ struct NewTileEvent;
 #[derive(Default, Resource)]
 struct Game {
     score: u32,
+    best_score: u32,
 }
 
 const TILE_SIZE: f32 = 80.0;
@@ -325,19 +329,31 @@ fn board_shift(
             }
         }
         new_tile_events.send(NewTileEvent);
+
+        if game.best_score < game.score {
+            game.best_score = game.score;
+        }
     }
 }
 
 fn render_tiles(
-    mut tiles: Query<(&mut Transform, &Position, Changed<Position>)>,
+    mut commands: Commands,
+    mut tiles: Query<(Entity, &mut Transform, &Position, Changed<Position>)>,
     query_board: Query<&Board>,
 ) {
     let board = query_board.single();
 
-    for (mut transform, pos, pos_changed) in tiles.iter_mut() {
+    for (entity, transform, pos, pos_changed) in tiles.iter_mut() {
         if pos_changed {
-            transform.translation.x = board.cell_position_to_physical(pos.x);
-            transform.translation.y = board.cell_position_to_physical(pos.y);
+            let x = board.cell_position_to_physical(pos.x);
+            let y = board.cell_position_to_physical(pos.y);
+            commands.entity(entity).insert(transform.ease_to(
+                Transform::from_xyz(x, y, transform.translation.z),
+                EaseFunction::QuadraticInOut,
+                EasingType::Once {
+                    duration: std::time::Duration::from_millis(100),
+                },
+            ));
         }
     }
 }
@@ -413,4 +429,16 @@ fn end_game(
             run_state.set(GameState::GameOver);
         }
     }
+}
+
+fn game_reset(
+    mut commands: Commands,
+    tiles: Query<Entity, With<Position>>,
+    mut game: ResMut<Game>,
+) {
+    for entity in tiles.iter() {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    game.score = 0;
 }
