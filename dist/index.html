@@ -1,0 +1,15 @@
+<html><head>
+
+
+
+<link rel="preload" href="/b2048-b81b07eec1f849e7_bg.wasm" as="fetch" type="application/wasm" crossorigin="anonymous" integrity="sha384-7GaPv0PbrZpypy8ZD736XhG5P5_3l8-X4jkWZhUS127bL3EopLpveHcDde2ZFVxS">
+<link rel="modulepreload" href="/b2048-b81b07eec1f849e7.js" crossorigin="anonymous" integrity="sha384--Xqxr1VRnAco-opoXhvrGcxU3QftJSEkBmWcgZBZBjJG5Di-0vaOfvc6cIC_hyim"></head>
+
+<body>
+
+<script type="module">
+import init, * as bindings from '/b2048-b81b07eec1f849e7.js';
+init('/b2048-b81b07eec1f849e7_bg.wasm');
+window.wasmBindings = bindings;
+
+</script></body></html>
